@@ -178,7 +178,7 @@ const MultiCapture = () => {
           ))}
         </div>
       )}
-    </div>//
+    </div>
   );
 };
 
