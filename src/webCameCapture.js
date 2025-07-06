@@ -8,6 +8,8 @@ const MultiCapture = () => {
   const [resultImage, setResultImage] = useState(null);
   const [modelResult, setModelResult] = useState("");
 
+  const url = 'http://127.0.0.1:8000'
+
   useEffect(() => {
     const startCamera = async () => {
       try {
@@ -56,7 +58,7 @@ const MultiCapture = () => {
     });
 
     try {
-      const response = await fetch("http://192.168.1.18:8000/upload-batch", {
+      const response = await fetch(`${url}/upload-training-images`, {
         method: "POST",
         body: formData,
       });
@@ -105,7 +107,7 @@ const MultiCapture = () => {
     formData.append("image", dataURLtoBlob(dataUrl), "snapshot.jpg");
 
     try {
-      const response = await fetch("http://192.168.1.18:8000/predict", {
+      const response = await fetch(`${url}/recognize`, {
         method: "POST",
         body: formData,
       });
