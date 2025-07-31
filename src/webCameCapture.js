@@ -113,13 +113,14 @@ const MultiCapture = () => {
       });
 
       const result = await response.json();
-      setModelResult(result?.label || "No result returned");
+      setModelResult(result || "No result returned");
+      console.log({result})
     } catch (error) {
       console.error("Prediction failed:", error);
       alert("Failed to get model result.");
     }
   };
-
+console.log({modelResult})
   const dataURLtoBlob = (dataUrl) => {
     const byteString = atob(dataUrl.split(",")[1]);
     const mimeString = dataUrl.split(",")[0].split(":")[1].split(";")[0];
@@ -141,8 +142,8 @@ const MultiCapture = () => {
       <video ref={videoRef} autoPlay playsInline style={{ width: "100%", maxWidth: 600 }} />
 
       <div style={{ marginTop: 20 }}>
-        <button onClick={() => captureFrames(10, 1000)} disabled={isCapturing}>
-          {isCapturing ? "Capturing..." : "Train Model: Capture 10 Frames"}
+        <button onClick={() => captureFrames(20, 1000)} disabled={isCapturing}>
+          {isCapturing ? "Capturing..." : "Train Model: Capture Frames"}
         </button>
         <button onClick={takeSnapshotForModel} style={{ marginLeft: 10 }}>
           Take Snapshot for Model
@@ -167,7 +168,7 @@ const MultiCapture = () => {
         <div style={{ marginTop: 20 }}>
           <h4>🧠 Model Input:</h4>
           <img src={resultImage} alt="Snapshot" style={{ width: 200 }} />
-          <p><strong>Prediction Result:</strong> {modelResult}</p>
+          <p><strong>Prediction Result:</strong> {modelResult.result ? 'Matched' : 'Not Matched'}</p>
         </div>
       )}
 
