@@ -10,7 +10,7 @@ const MultiCapture = () => {
   const [livenessResult, setLivenessResult] = useState(null);
   const [isLivenessMode, setIsLivenessMode] = useState(false);
 
-  const url = 'http://127.0.0.1:8000';
+  const url = 'https://api.face.supersaasai.com';
 
   useEffect(() => {
     const startCamera = async () => {
