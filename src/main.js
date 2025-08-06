@@ -18,7 +18,7 @@ app.post("/api/register", upload.single("image"), async (req, res) => {
     const { name } = req.body;
     const imagePath = req.file.path;
     const response = await axios.post(
-      "http://127.0.0.1:5001/register",
+      "http://127.0.0.1:8000/register",
       {
         name,
         image: require("fs").createReadStream(imagePath),
@@ -35,7 +35,7 @@ app.post("/api/recognize", upload.single("image"), async (req, res) => {
   try {
     const imagePath = req.file.path;
     const response = await axios.post(
-      "http://127.0.0.1:5001/recognize",
+      "http://127.0.0.1:8000/recognize",
       {
         image: require("fs").createReadStream(imagePath),
       },
