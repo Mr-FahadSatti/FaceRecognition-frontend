@@ -14,6 +14,7 @@ const MultiCapture = () => {
   const [personName, setPersonName] = useState("");
   const [isTrainingMode, setIsTrainingMode] = useState(false);
 
+
   const url = process.env.SERVER_URL || "https://api.face.supersaasai.com";
 
   useEffect(() => {
