@@ -1,7 +1,7 @@
 FROM node:latest
 
 # Set environment variable (optional)
-ENV SERVER_URL='http://127.0.0.1:8000'
+ENV REACT_APP_SERVER_URL='http://127.0.0.1:8000'
 
 # Create app directory
 WORKDIR /app

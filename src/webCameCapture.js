@@ -15,7 +15,7 @@ const MultiCapture = () => {
   const [isTrainingMode, setIsTrainingMode] = useState(false);
 
 
-  const url = process.env.SERVER_URL || "https://api.face.supersaasai.com";
+  const url = process.env.REACT_APP_SERVER_URL || "https://api.face.supersaasai.com";
 
   useEffect(() => {
     const startCamera = async () => {
