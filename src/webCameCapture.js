@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const MultiCapture = () => {
+  const navigate = useNavigate();
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [images, setImages] = useState([]);
@@ -12,10 +14,13 @@ const MultiCapture = () => {
   
   // New state for person name
   const [personName, setPersonName] = useState("");
+  const [userName, setUserName] = useState("");
+  const [deleteUserName, setDeleteUserName] = useState("");
   const [isTrainingMode, setIsTrainingMode] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
 
-  const url = process.env.REACT_APP_SERVER_URL || "https://api.face.supersaasai.com";
+  const url = process.env.REACT_APP_SERVER_URL ;
 
   useEffect(() => {
     const startCamera = async () => {
@@ -45,6 +50,10 @@ const MultiCapture = () => {
       alert("Please enter a person's name before training!");
       return;
     }
+    if (!userName.trim()) {
+      alert("Please enter a userName before training!");
+      return;
+    }
 
     setIsCapturing(true);
     setIsTrainingMode(true);
@@ -65,17 +74,18 @@ const MultiCapture = () => {
     }
 
     setImages(capturedImages);
-    uploadImagesForTraining(capturedImages, personName.trim());
+    uploadImagesForTraining(capturedImages, personName.trim(), userName.trim());
     setIsCapturing(false);
     setIsTrainingMode(false);
   };
 
-  // Updated training upload with person name
-  const uploadImagesForTraining = async (dataURLs, name) => {
+  // Updated training upload with person name and userName
+  const uploadImagesForTraining = async (dataURLs, name, userName) => {
     const formData = new FormData();
     
-    // Add person name to form data
+    // Add person name and userName to form data
     formData.append("name", name);
+    formData.append("userName", userName);
     
     dataURLs.forEach((dataUrl, index) => {
       formData.append("images", dataURLtoBlob(dataUrl), `${name}_image${index + 1}.jpg`);
@@ -91,14 +101,53 @@ const MultiCapture = () => {
       console.log("Training response:", result);
       
       if (response.ok) {
-        alert(`Training images for ${name} uploaded successfully!`);
+        alert(`Training images for ${name} (${userName}) uploaded successfully!`);
         setPersonName(""); // Clear the name field after successful upload
+        setUserName(""); // Clear the userName field after successful upload
       } else {
         alert(`Training failed: ${result.error}`);
       }
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Failed to upload images.");
+    }
+  };
+
+  // Delete user function
+  const deleteUser = async () => {
+    if (!deleteUserName.trim()) {
+      alert("Please enter a userName to delete!");
+      return;
+    }
+
+    const userNameToDelete = deleteUserName.trim();
+    
+    // Confirm deletion
+    if (!window.confirm(`Are you sure you want to delete all data for user "${userNameToDelete}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(`${url}/delete-user/${encodeURIComponent(userNameToDelete)}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+      console.log("Delete response:", result);
+      
+      if (response.ok) {
+        alert(`User "${userNameToDelete}" deleted successfully! ${result.remaining_users} user(s) remaining.`);
+        setDeleteUserName(""); // Clear the delete userName field after successful deletion
+      } else {
+        alert(`Delete failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("Failed to delete user.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -257,7 +306,31 @@ const MultiCapture = () => {
 
   return (
     <div style={{ textAlign: "center", padding: 20, maxWidth: 800, margin: "0 auto" }}>
-      <h2>📷 Advanced Face Recognition with Liveness Detection</h2>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center",
+        marginBottom: 20
+      }}>
+        <h2 style={{ margin: 0 }}>📷 Advanced Face Recognition with Liveness Detection</h2>
+        <button 
+          onClick={() => navigate("/report")}
+          style={{
+            padding: "10px 20px",
+            fontSize: "16px",
+            backgroundColor: "#6c757d",
+            color: "white",
+            border: "none",
+            borderRadius: 5,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
+          }}
+        >
+          📊 View Report
+        </button>
+      </div>
       
       <div style={{ 
         border: "2px solid #007bff", 
@@ -316,18 +389,46 @@ const MultiCapture = () => {
             This name will be used to identify the person during recognition
           </small>
         </div>
+
+        <div style={{ marginBottom: 15 }}>
+          <label htmlFor="userName" style={{ 
+            display: "block", 
+            marginBottom: 5, 
+            fontWeight: "bold" 
+          }}>
+            User Name:
+          </label>
+          <input
+            id="userName"
+            type="text"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            placeholder="Enter userName (unique identifier)"
+            style={{
+              padding: "8px 12px",
+              fontSize: "16px",
+              borderRadius: 4,
+              border: "1px solid #ccc",
+              width: "250px",
+              marginBottom: 10
+            }}
+          />
+          <small style={{ display: "block", color: "#666", marginBottom: 10 }}>
+            Unique identifier for the user (used for deletion and management)
+          </small>
+        </div>
         
         <button 
           onClick={() => captureFrames(20, 1000)} 
-          disabled={isCapturing || !personName.trim()}
+          disabled={isCapturing || !personName.trim() || !userName.trim()}
           style={{ 
             padding: "10px 20px", 
             fontSize: "16px",
-            backgroundColor: !personName.trim() ? "#ccc" : "#28a745",
+            backgroundColor: (!personName.trim() || !userName.trim()) ? "#ccc" : "#28a745",
             color: "white",
             border: "none",
             borderRadius: 5,
-            cursor: (!personName.trim() || isCapturing) ? "not-allowed" : "pointer"
+            cursor: (!personName.trim() || !userName.trim() || isCapturing) ? "not-allowed" : "pointer"
           }}
         >
           {isCapturing ? "Capturing..." : `🎯 Train Model: Capture 20 Frames${personName ? ` for ${personName}` : ''}`}
@@ -338,6 +439,61 @@ const MultiCapture = () => {
             Training in progress... Look directly at the camera and move slightly between captures.
           </div>
         )}
+      </div>
+
+      {/* Delete User Section */}
+      <div style={{ 
+        marginBottom: 20,
+        padding: 15,
+        backgroundColor: "#ffe8e8",
+        borderRadius: 8,
+        border: "1px solid #dc3545"
+      }}>
+        <h4>🗑️ Delete User Data</h4>
+        
+        <div style={{ marginBottom: 15 }}>
+          <label htmlFor="deleteUserName" style={{ 
+            display: "block", 
+            marginBottom: 5, 
+            fontWeight: "bold" 
+          }}>
+            User Name to Delete:
+          </label>
+          <input
+            id="deleteUserName"
+            type="text"
+            value={deleteUserName}
+            onChange={(e) => setDeleteUserName(e.target.value)}
+            placeholder="Enter userName to delete"
+            style={{
+              padding: "8px 12px",
+              fontSize: "16px",
+              borderRadius: 4,
+              border: "1px solid #ccc",
+              width: "250px",
+              marginBottom: 10
+            }}
+          />
+          <small style={{ display: "block", color: "#666", marginBottom: 10 }}>
+            This will delete all training data for the specified userName. You can then add new images to retrain.
+          </small>
+        </div>
+        
+        <button 
+          onClick={deleteUser} 
+          disabled={isDeleting || !deleteUserName.trim()}
+          style={{ 
+            padding: "10px 20px", 
+            fontSize: "16px",
+            backgroundColor: !deleteUserName.trim() ? "#ccc" : "#dc3545",
+            color: "white",
+            border: "none",
+            borderRadius: 5,
+            cursor: (!deleteUserName.trim() || isDeleting) ? "not-allowed" : "pointer"
+          }}
+        >
+          {isDeleting ? "Deleting..." : `🗑️ Delete User Data`}
+        </button>
       </div>
 
       {/* Recognition Section */}
@@ -442,10 +598,11 @@ const MultiCapture = () => {
       }}>
         <h5>ℹ️ How to Use:</h5>
         <ul style={{ textAlign: "left", maxWidth: 600, margin: "0 auto" }}>
-          <li><strong>Training:</strong> Enter person's name, then capture 20 frames while looking at camera</li>
+          <li><strong>Training:</strong> Enter person's name and userName, then capture 20 frames while looking at camera</li>
           <li><strong>Recognition:</strong> Use "Recognize Face" to identify trained persons</li>
           <li><strong>Liveness Detection:</strong> Prevents recognition from photos/screens</li>
-          <li><strong>Multiple People:</strong> Train different people by changing the name field</li>
+          <li><strong>Multiple People:</strong> Train different people by changing the name and userName fields</li>
+          <li><strong>Delete User:</strong> Enter userName to delete previous training data and retrain with new images</li>
         </ul>
       </div>
     </div>
